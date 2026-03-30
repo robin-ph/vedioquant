@@ -114,7 +114,7 @@ render_table_image(
     [
         ['Cache Compression Ratio', '10.7× (fp32 → 3-bit)'],
         ['Cosine Similarity', '0.9822 (< 2% quality loss)'],
-        ['720P 81-frame Cache', '886 MB → 88 MB'],
+        ['720P 81-frame Cache', '886 MB → 83 MB'],
         ['Decompression Latency', '< 1ms per cache hit'],
     ],
     'table_key_results.png',
@@ -124,12 +124,12 @@ render_table_image(
 
 # 表2: 计算量对比
 render_table_image(
-    ['', 'LLM (Qwen3-7B)', 'Video (Wan2.1-14B, 720P)'],
+    ['', 'LLM (Qwen3-7B)', 'Video (Wan2.1-1.3B, 720P)'],
     [
         ['Tokens', '~8,000', '75,600'],
         ['Compute Passes', '1 per token', '50 (denoising steps)'],
-        ['Total Attention', '8K² × 32 layers', '75.6K² × 40L × 50 steps'],
-        ['Scale', '1×', '~350×'],
+        ['Total Attention', '8K² x 32 layers', '75.6K² x 30L x 50 steps'],
+        ['Scale', '1x', '~4000x'],
     ],
     'table_compute_comparison.png',
     title='Compute: LLM vs Video Model',
@@ -142,7 +142,7 @@ render_table_image(
     [
         ['Qwen3-7B', '8K context', '~32 MB', '~1 GB'],
         ['Wan2.1-1.3B', '480P / 81 frames', '192 MB', '5.8 GB'],
-        ['Wan2.1-14B', '720P / 81 frames', '443 MB', '12.98 GB'],
+        ['Wan2.1 (720P est.)', '720P / 81 frames', '443 MB', '12.98 GB'],
     ],
     'table_cache_size.png',
     title='Cache Size: LLM vs Video Model',
@@ -154,12 +154,12 @@ render_table_image(
 render_table_image(
     ['Property', 'LLM KV Vectors', 'Video Features', 'Implication'],
     [
-        ['Pre-rotation Kurtosis', '~900', '~15', 'Video more uniform'],
-        ['Post-rotation Kurtosis', '2.9', '0.2', 'Better Gaussianization'],
-        ['3-bit Cosine Sim', '0.95', '0.98', 'Higher quality'],
+        ['Pre-rotation Kurtosis', '~900 *', '~15', 'Video more uniform'],
+        ['Post-rotation Kurtosis', '2.9 *', '0.2', 'Better Gaussianization'],
+        ['3-bit Cosine Sim', '0.95 *', '0.98', 'Higher quality'],
     ],
     'table_feature_comparison.png',
-    title='Feature Properties: Video Features Compress Better',
+    title='Feature Properties (* = from turboquant_plus repo, not our experiment)',
     highlight_row=2,
     col_widths=[0.28, 0.22, 0.22, 0.28],
 )
@@ -182,9 +182,9 @@ render_table_image(
 render_table_image(
     ['Cached Layers', 'fp32', '3-bit VedioQuant', 'Saved', '24GB GPU'],
     [
-        ['2 layers', '886 MB', '88 MB', '798 MB', 'Both fit'],
-        ['10 layers', '4.33 GB', '441 MB', '3.89 GB', 'Both fit'],
-        ['30 layers (all)', '12.98 GB', '1.29 GB', '11.68 GB', 'fp32: NO / 3-bit: YES'],
+        ['2 layers', '886 MB', '83 MB', '803 MB', 'Both fit'],
+        ['10 layers', '4.33 GB', '417 MB', '3.92 GB', 'Both fit'],
+        ['30 layers (all)', '12.98 GB', '1.22 GB', '11.76 GB', 'fp32: NO / 3-bit: YES'],
     ],
     'table_memory_savings.png',
     title='Memory Savings at 720P / 81 Frames',
@@ -320,12 +320,35 @@ def add_bold(doc, text, size=12, color=None):
         run.font.color.rgb = RGBColor(*color)
 
 
-def add_cover(doc):
-    for _ in range(2):
+def add_cover(doc, title_line1, title_line2, subtitle):
+    for _ in range(1):
         doc.add_paragraph()
     # 插入 banner
     add_img(doc, 'twitter_banner.png', 6.5)
     doc.add_paragraph()
+
+    # 文章标题
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(title_line1)
+    run.font.size = Pt(22)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x2E)
+
+    if title_line2:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run(title_line2)
+        run.font.size = Pt(18)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(0xFF, 0x6B, 0x6B)
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(subtitle)
+    run.font.size = Pt(12)
+    run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+
     doc.add_page_break()
 
 
@@ -337,9 +360,13 @@ print("\n生成中文版文档...")
 
 doc = Document()
 setup_styles(doc)
-add_cover(doc)
+add_cover(doc,
+    '我把Google的LLM黑科技用在了阿里Wan2.1视频模型上',
+    '缓存直降10倍，效果比语言模型上还好——AI视频的算力账单要变天了',
+    'VedioQuant: TurboQuant × TeaCache 跨领域融合 | 在阿里Wan2.1上验证 | github.com/robin-ph/vedioquant'
+)
 
-doc.add_heading('起因：一个视频创作者的好奇心', level=1)
+doc.add_heading('起因：一个视频模型爱好者的好奇心', level=1)
 
 doc.add_paragraph(
     '2025 年，AI 视频生成赛道彻底爆发。字节跳动的 Seedance 在中国一经发布就供不应求——'
@@ -348,9 +375,9 @@ doc.add_paragraph(
 )
 
 doc.add_paragraph(
-    '作为一个对技术充满好奇的人，我想知道：为什么视频生成这么贵？'
+    '作为一个视频模型爱好者，我非常好奇：为什么视频生成这么贵？'
     '一段 5 秒 720P 的视频，背后到底发生了多少计算？'
-    '于是我开始深入研究视频扩散模型的推理流程。'
+    '于是我开始深入研究视频扩散模型的推理流程，特别是阿里开源的 Wan2.1。'
 )
 
 doc.add_paragraph(
@@ -361,13 +388,13 @@ doc.add_paragraph(
 doc.add_heading('转折：Google 的论文和一个惊喜发现', level=2)
 
 doc.add_paragraph(
-    '就在这时，我看到 Google 在 ICLR 2026 发表了 TurboQuant——把大语言模型 KV Cache '
+    '就在这时，我看到 Google Research 发布了 TurboQuant（arXiv:2504.19874）——把大语言模型 KV Cache '
     '从 fp16 压缩到 3.5-bit，4× 压缩下余弦相似度仍有 0.95。核心 trick 是随机正交旋转让向量坐标高斯化。'
 )
 
 doc.add_paragraph(
-    '紧接着，有人用 Python 工程复现了 TurboQuant（turboquant_plus），在 Qwen3 上验证了'
-    '旋转后峰度从 900 降到 2.9，141 个测试全部通过。这证明了算法工程上完全可行。'
+    '紧接着，有人用 Python 工程复现了 TurboQuant（turboquant_plus，GitHub 1.7k stars），'
+    '在 Qwen3 上验证了旋转后峰度从 900 降到 2.9。这证明了算法工程上完全可行。'
 )
 
 add_bold(doc,
@@ -386,9 +413,10 @@ doc.add_page_break()
 # ---- 为什么视频模型更需要 ----
 doc.add_heading('为什么视频模型比语言模型更需要缓存压缩？', level=1)
 
-doc.add_heading('原因 1：计算量是语言模型的 ~350 倍', level=2)
+doc.add_heading('原因 1：计算量是语言模型的数千倍', level=2)
 doc.add_paragraph(
     '语言模型 KV Cache 线性增长，视频模型每步对所有 token 做全量注意力，重复 50 次。'
+    '粗略估算，视频模型的注意力计算量约为语言模型的 ~4000 倍。'
 )
 add_img(doc, 'table_compute_comparison.png', 5.5)
 doc.add_paragraph()
@@ -402,7 +430,7 @@ doc.add_paragraph()
 
 doc.add_heading('原因 3：视频特征天然更适合压缩', level=2)
 doc.add_paragraph(
-    '实验中的意外惊喜——视频特征的峰度只有 15（语言模型 900），'
+    '实验中的意外惊喜——视频特征的峰度只有 15（据 turboquant_plus 报告，语言模型约 900），'
     '旋转后几乎完美高斯（峰度 0.2 vs 理论 0.0），压缩质量比语言模型上还好。'
 )
 add_img(doc, 'table_feature_comparison.png', 5.5)
@@ -465,7 +493,7 @@ add_img(doc, 'full_cache_comparison.png', 5.0)
 add_caption(doc, '图5: 720P/81帧全层缓存')
 doc.add_paragraph()
 add_img(doc, 'table_memory_savings.png', 5.5)
-add_bold(doc, '30 层全缓存：13GB → 1.3GB，省出 12GB，24GB GPU 跑 720P 长视频。', 12, (0xFF, 0x6B, 0x6B))
+add_bold(doc, '30 层全缓存：13GB → 1.2GB，省出近 12GB，24GB GPU 跑 720P 长视频。', 12, (0xFF, 0x6B, 0x6B))
 
 doc.add_page_break()
 
@@ -479,7 +507,7 @@ print(handle.stats())
 # → {'cache_hits': 32, 'hit_rate': '64.0%', 'compression_ratio': '10.7×'}
 
 vedioquant.estimate_savings(height=720, width=1280, num_frames=81)
-# → fp32: 886MB, 3-bit: 83MB, saved: 803MB"""
+# → fp32: 886 MB, 3-bit: 83 MB, saved: 803 MB"""
 p = doc.add_paragraph()
 run = p.add_run(code)
 run.font.name = 'Courier New'
@@ -501,7 +529,7 @@ for c in [
 
 doc.add_heading('参考文献', level=1)
 for r in [
-    'TurboQuant: arXiv:2504.19874 (ICLR 2026)',
+    'TurboQuant: arXiv:2504.19874 (Google Research, 2025)',
     'PolarQuant: arXiv:2502.02617',
     'QJL: arXiv:2406.03482',
     'TeaCache: arXiv:2411.19108',
@@ -529,9 +557,13 @@ print("\n生成英文版文档...")
 
 doc = Document()
 setup_styles(doc)
-add_cover(doc)
+add_cover(doc,
+    'I Took Google\'s LLM Trick and Tested It on Alibaba\'s Wan2.1 Video Model',
+    '10x Cache Reduction — And It Works Even Better Than on LLMs',
+    'VedioQuant: TurboQuant x TeaCache Cross-Domain Fusion | Verified on Wan2.1 | github.com/robin-ph/vedioquant'
+)
 
-doc.add_heading('Origin Story: From Curiosity to a 10× Breakthrough', level=1)
+doc.add_heading('Origin Story: A Video Model Enthusiast\'s 10x Discovery', level=1)
 
 doc.add_paragraph(
     'In 2025, AI video generation exploded. ByteDance\'s Seedance launched in China and was '
@@ -541,21 +573,22 @@ doc.add_paragraph(
 )
 
 doc.add_paragraph(
-    'Curious about the technology, I wanted to understand: why is video generation so expensive? '
-    'A single generation requires ~50 denoising steps, each running a full transformer forward pass '
-    'over 75,600 tokens across 30 layers. It demands an A100 80GB GPU — hardware most creators can\'t afford.'
+    'As a video model enthusiast, I was deeply curious: why is video generation so expensive? '
+    'I started studying Alibaba\'s open-source Wan2.1 model and found that a single generation '
+    'requires ~50 denoising steps, each running a full transformer forward pass over 75,600 tokens '
+    'across 30 layers. It demands an A100 80GB GPU — hardware most people can\'t afford.'
 )
 
 doc.add_heading('The Spark', level=2)
 
 doc.add_paragraph(
-    'Then I saw Google\'s TurboQuant (ICLR 2026) — compressing LLM KV Cache from fp16 to 3.5 bits '
+    'Then I saw Google Research\'s TurboQuant (arXiv:2504.19874) — compressing LLM KV Cache from fp16 to 3.5 bits '
     'with 0.95 cosine similarity. The core trick: random orthogonal rotation to Gaussianize coordinates.'
 )
 
 doc.add_paragraph(
-    'Someone reproduced it in Python (turboquant_plus) and validated on Qwen3: kurtosis dropped '
-    'from 900 to 2.9 after rotation. All 141 tests passed. It works in practice.'
+    'Someone reproduced it in Python (turboquant_plus, 1.7k GitHub stars) and validated on Qwen3: '
+    'kurtosis dropped from 900 to 2.9 after rotation. It works in practice, not just on paper.'
 )
 
 add_bold(doc,
@@ -569,7 +602,7 @@ doc.add_page_break()
 
 doc.add_heading('Why Video Models Need Cache Compression More Than LLMs', level=1)
 
-doc.add_heading('Reason 1: ~350× More Compute', level=2)
+doc.add_heading('Reason 1: ~4000x More Compute', level=2)
 add_img(doc, 'table_compute_comparison.png', 5.5)
 doc.add_paragraph()
 
@@ -580,9 +613,9 @@ doc.add_paragraph()
 
 doc.add_heading('Reason 3: Video Features Compress Better (Surprise!)', level=2)
 doc.add_paragraph(
-    'An unexpected discovery — video features have kurtosis of only 15 (vs 900 for LLMs). '
-    'After rotation, kurtosis drops to 0.2 — nearly perfect Gaussian. TurboQuant works BETTER '
-    'on video models than on its original LLM target.'
+    'An unexpected discovery — video features have kurtosis of only 15 (vs ~900 for LLMs, '
+    'as reported by the turboquant_plus repo). After rotation, kurtosis drops to 0.2 — nearly '
+    'perfect Gaussian. TurboQuant actually works BETTER on video models than on its original LLM target.'
 )
 add_img(doc, 'table_feature_comparison.png', 5.5)
 doc.add_paragraph()
@@ -639,7 +672,7 @@ add_img(doc, 'full_cache_comparison.png', 5.0)
 add_caption(doc, 'Figure 5: Full-layer caching — VedioQuant enables 24GB GPUs')
 doc.add_paragraph()
 add_img(doc, 'table_memory_savings.png', 5.5)
-add_bold(doc, 'Full 30-layer cache: 13GB → 1.3GB. Saves ~12GB. Consumer GPU runs 720P long video.', 12, (0xFF, 0x6B, 0x6B))
+add_bold(doc, 'Full 30-layer cache: 13GB → 1.2GB. Saves ~12GB. Consumer GPU runs 720P long video.', 12, (0xFF, 0x6B, 0x6B))
 
 doc.add_page_break()
 
@@ -652,7 +685,7 @@ print(handle.stats())
 # → {'cache_hits': 32, 'hit_rate': '64.0%', 'compression_ratio': '10.7×'}
 
 vedioquant.estimate_savings(height=720, width=1280, num_frames=81)
-# → fp32: 886MB, 3-bit: 83MB, saved: 803MB"""
+# → fp32: 886 MB, 3-bit: 83 MB, saved: 803 MB"""
 p = doc.add_paragraph()
 run = p.add_run(code)
 run.font.name = 'Courier New'
@@ -672,7 +705,7 @@ for c in [
 
 doc.add_heading('References', level=1)
 for r in [
-    'TurboQuant: arXiv:2504.19874 (ICLR 2026)',
+    'TurboQuant: arXiv:2504.19874 (Google Research, 2025)',
     'PolarQuant: arXiv:2502.02617',
     'QJL: arXiv:2406.03482',
     'TeaCache: arXiv:2411.19108',

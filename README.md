@@ -199,7 +199,7 @@ Both cache **attention layer intermediate tensors**. Since TurboQuant's compress
 
 ### References
 
-- **TurboQuant**: [arXiv:2504.19874](https://arxiv.org/abs/2504.19874) (ICLR 2026) — KV cache extreme compression via PolarQuant + QJL
+- **TurboQuant**: [arXiv:2504.19874](https://arxiv.org/abs/2504.19874) (Google Research, 2025) — KV cache extreme compression via PolarQuant + QJL
 - **PolarQuant**: [arXiv:2502.02617](https://arxiv.org/abs/2502.02617) — Random rotation for quantization-friendly distributions
 - **QJL**: [arXiv:2406.03482](https://arxiv.org/abs/2406.03482) — Quantized Johnson-Lindenstrauss for inner product preservation
 - **TeaCache**: [arXiv:2411.19108](https://arxiv.org/abs/2411.19108) — Timestep-aware caching for video diffusion

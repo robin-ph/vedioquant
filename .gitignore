@@ -10,3 +10,5 @@ build/
 *.egg
 .venv/
 venv/
+.DS_Store
+.~*
